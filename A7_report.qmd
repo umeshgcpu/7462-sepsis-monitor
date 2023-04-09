@@ -22,12 +22,7 @@ source("sepsis_monitor_functions.R")
 
 ### Date & Time:
 
-```{r}
-#| echo: false
-#| error: false
-# The **date & time** of report generation is 
-Sys.time()
-```
+The report last run: `r Sys.time()`
 
 ### Table of Last Vitals for Patients with Sepsis
 
