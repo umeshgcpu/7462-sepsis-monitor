@@ -2,7 +2,10 @@
 title: "A7"
 author: "Umesh Ghimire"
 format: html
-editor: visual
+execute: 
+  echo: false
+  warning: false
+  message: false
 ---
 
 ```{r}
