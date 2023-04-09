@@ -1,0 +1,119 @@
+---
+title: "A7"
+author: "Umesh Ghimire"
+format: html
+editor: visual
+---
+
+```{r}
+#| include: false
+#| message: false
+#| warning: false
+#Library and Functions
+library(tidyverse)
+library(readr)
+library(data.table) ## For the fread function
+library(lubridate)
+library(tictoc)
+library(googledrive)
+library(DT)
+source("sepsis_monitor_functions.R")
+```
+
+### Date & Time:
+
+```{r}
+#| echo: false
+#| error: false
+# The **date & time** of report generation is 
+Sys.time()
+```
+
+### Table of Last Vitals for Patients with Sepsis
+
+```{r include = FALSE, echo = FALSE}
+
+drive_deauth()
+sepsis_filepath <- "https://drive.google.com/file/d/1nJ0vLIscngULZ01rVF78wbObJbJiwmqH/view?usp=sharing"
+new_data <- updateData(sepsis_filepath)
+most_recent_data <- new_data %>%
+  group_by(PatientID) %>%
+  filter(obsTime == max(obsTime))
+```
+
+```{r include = FALSE, echo = FALSE, warning=FALSE}
+sepsis.df <- drive_read_string(sepsis_filepath) %>%
+  read_csv()
+sepsis.df$obsTime <- as.Date(sepsis.df$obsTime)
+sepsis.tbl <- sepsis.df %>%
+  filter(SepsisLabel == 1) %>%
+  group_by(PatientID) %>%
+  summarize(HR = last(na.omit(HR)),
+            Temp = last(na.omit(Temp)),
+            Resp = last(na.omit(Resp)))
+```
+
+```{r include = TRUE, echo = FALSE}
+datatable(sepsis.tbl)
+```
+
+
+### Plots of heart rate, temperature, and respiratory rate for patients with sepsis
+
+```{r}
+#| echo: false
+#| error: false
+#| message: false
+#| warning: false
+patients <- sepsis.tbl$PatientID
+sepsis.df <- sepsis.df %>%
+  filter(PatientID %in% patients)
+
+
+#Heart Rate Plots
+ggplot(sepsis.df, aes(x = obsTime, y = HR)) +
+  geom_line(color = "red", linetype = "dotted") +
+  facet_wrap(~ PatientID, scales = "free_y") +
+  labs(x = "Observation Time", y = "Heart Rate",
+       title = "Sepsis Patients Heart Rate") +
+  theme_minimal()
+
+
+#Temperature Plots
+ggplot(sepsis.df, aes(x = obsTime, y = Temp, color = Temp)) +
+  geom_point() +
+  facet_wrap(~ PatientID) +
+  ggtitle("Sepsis Patients Temperatures") +
+  theme_minimal() +
+  theme(panel.grid.major = element_line(colour = "gray80")) +
+  scale_color_gradient(low = "blue", high = "red")+
+  guides(color = FALSE)
+
+
+#Respirations Plots
+ggplot(sepsis.df, aes(x = obsTime, y = Resp, color = Resp)) +
+  geom_point() +
+  facet_wrap(~ PatientID) +
+  ggtitle("Sepsis Patients Respirations") +
+  theme_minimal() +
+  theme(panel.grid.major = element_line(colour = "gray80")) +
+  scale_color_gradientn(colors = c("blue", "green", "yellow", "red")) +
+  guides(color = FALSE)
+
+```
+
+### A table that shows the difference in vital signs between the last two measurements
+
+```{r}
+#| echo: false
+#| error: false
+#| message: false
+sepsis.tbl2 <- sepsis.df %>%
+  group_by(PatientID) %>%
+  summarize(HR_Change = last(na.omit(HR) - second_to_last(HR)),
+            Temp_Change = round(last(na.omit(Temp) - second_to_last(Temp)),2),
+            Resp_Change = last(na.omit(Resp) - second_to_last(Resp)))
+datatable(sepsis.tbl2)
+
+
+```
