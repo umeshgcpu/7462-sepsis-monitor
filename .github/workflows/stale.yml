@@ -39,13 +39,7 @@ jobs:
                any::tictoc
                any::googledrive
                any::DT
-               
-
-      - name: Render document
-        uses: quarto-dev/quarto-actions/render@v2
-        with:
-          to: gfm
-          path: README.qmd
+             
           
       - name: Render html
         uses: quarto-dev/quarto-actions/render@v2
